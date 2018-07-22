@@ -1,5 +1,6 @@
 package game.controllers.pacman.exercises.e4.path.uninformed;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -55,10 +56,59 @@ public class BDS extends UninformedGraphSearchBase<Object> {
 		if (state != PathFinderState.RUNNING) return state;
 		
 		++steps;
-		
-		// TODO: implement me!
-		
+		bfs1.step();
+		bfs2.step();
+
+		Collection<Node> closed1 = bfs1.getClosedList();
+		Collection<Node> closed2 = bfs2.getClosedList();
+		closed1.addAll(bfs1.getOpenList());
+		closed2.addAll(bfs2.getOpenList());
+
+		Node result = null;
+		for (Node node : closed1) {
+			if (closed2.contains(node)) {
+				result = node;
+				break;
+			}
+		}
+
+		if (result != null) {
+			SearchTreeNode startPathLeaf = bfs1.getNodeInfo(result);
+			SearchTreeNode goalPathLeaf = bfs2.getNodeInfo(result);
+			state = PathFinderState.PATH_FOUND;
+			path = getMergedPath(startPathLeaf, goalPathLeaf);
+		}
+
+		if (getOpenList().size() == 0) {
+			this.state = PathFinderState.PATH_NOT_FOUND;
+			return this.state;
+		}
+
 		return state;
+	}
+
+	protected Path getMergedPath(SearchTreeNode startPathLeaf, SearchTreeNode goalPathLeaf) {
+		ArrayList<Node> toStart = new ArrayList<>();
+		ArrayList<Node> toGoal = new ArrayList<>();
+
+		Node current = startPathLeaf.node;
+		while (start != current) {
+			toStart.add(0, current);
+			current = bfs1.getParent(current);
+		}
+		toStart.add(0, start);
+
+		current = goalPathLeaf.node;
+		while (end != current) {
+			toGoal.add(current);
+			current = bfs2.getParent(current);
+		}
+		toGoal.add(end);
+
+		toStart.addAll(toGoal);
+
+		Path path = new Path(toStart);
+		return path;
 	}
 
 	@Override

@@ -50,10 +50,15 @@ public class IDS extends UninformedGraphSearchBase<Object> {
 		if (state != PathFinderState.RUNNING) return state;
 		
 		++steps;
-		
-		// TODO: implement me!
-		
-		return state;		
+
+		this.state = dls.step();
+		if (this.state == PathFinderState.PATH_NOT_FOUND) {
+			currentLevel++;
+			dls.init(graph, start, end, new DLS.DLSConfig(currentLevel));
+			state = PathFinderState.RUNNING;
+		}
+
+		return this.state;
 	}
 
 	@Override

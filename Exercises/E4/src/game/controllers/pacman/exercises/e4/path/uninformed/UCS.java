@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 
+import game.controllers.pacman.exercises.e4.path.PathFinderState;
 import game.controllers.pacman.exercises.e4.path.uninformed.base.SearchTreeNode;
 import game.controllers.pacman.exercises.e4.path.uninformed.base.UninformedGraphSearch;
 
@@ -47,6 +48,33 @@ public class UCS extends UninformedGraphSearch<Object> {
 	@Override
 	protected SearchTreeNode selectNextNode(Collection<SearchTreeNode> openList) {
 		return ((PriorityQueue<SearchTreeNode>)openList).peek();
+	}
+
+	@Override
+	public PathFinderState step() {
+		if (state != PathFinderState.RUNNING) return state;
+
+		++steps;
+		if (opened.size() == 0) {
+			this.state = PathFinderState.PATH_NOT_FOUND;
+			return this.state;
+		}
+
+		SearchTreeNode toExpand = this.selectNextNode(this.opened);
+
+		if (this.start == this.end || toExpand.node == this.end) {
+			this.state = PathFinderState.PATH_FOUND;
+			this.path = this.getFoundPath(toExpand);
+			return this.state;
+		}
+
+		Collection<SearchTreeNode> newOpened = this.getNewOpened(toExpand);
+		this.opened.addAll(newOpened);
+
+		this.opened.remove(toExpand);
+		this.closed.add(toExpand);
+
+		return this.state;
 	}
 
 }
