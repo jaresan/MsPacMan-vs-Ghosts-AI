@@ -1,7 +1,9 @@
 package game.controllers.pacman.exercises.e4.path.uninformed;
 
 import game.controllers.pacman.exercises.e4.graph.Graph;
+import game.controllers.pacman.exercises.e4.graph.Link;
 import game.controllers.pacman.exercises.e4.graph.Node;
+import game.controllers.pacman.exercises.e4.path.PathFinderState;
 import game.controllers.pacman.exercises.e4.path.uninformed.DLS.DLSConfig;
 import game.controllers.pacman.exercises.e4.path.uninformed.base.SearchTreeNode;
 import game.controllers.pacman.exercises.e4.path.uninformed.base.UninformedGraphSearch;
@@ -47,6 +49,48 @@ public class DLS extends DFS<DLSConfig> {
 			return null;			
 		}
 		return super.makeSearchNode(node, pathCost, parent);
+	}
+
+	@Override
+	public PathFinderState step() {
+		if (state != PathFinderState.RUNNING) return state;
+
+		++steps;
+		if (opened.size() == 0) {
+			this.state = PathFinderState.PATH_NOT_FOUND;
+			return this.state;
+		}
+
+		SearchTreeNode toExpand = this.selectNextNode(this.opened);
+
+		for (Link link : toExpand.node.links.values()) {
+			SearchTreeNode target =
+					this.makeSearchNode(
+							link.getOtherEnd(toExpand.node),
+							toExpand.pathCost + link.distance,
+							toExpand
+					);
+
+			if (target == null) {
+				continue;
+			}
+
+			if (!this.closed.contains(target) && !this.opened.contains(target)) {
+				this.opened.add(target);
+
+				if (target.node == end) {
+					this.state = PathFinderState.PATH_FOUND;
+					this.path = this.getFoundPath(target);
+				}
+			}
+		}
+
+		if (toExpand.level != config.depthLimit) {
+			this.closed.add(toExpand);
+		}
+		this.opened.remove(toExpand);
+
+		return this.state;
 	}
 
 	public boolean isDepthLimitHit() {
